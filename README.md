@@ -1,5 +1,11 @@
 # 법원 경매/사건검색 MCP 서버 (lawyer-mcp)
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-3776AB?logo=python&logoColor=white)](https://www.python.org/)
+[![MCP](https://img.shields.io/badge/MCP-stdio%20server-6E56CF)](https://modelcontextprotocol.io/)
+[![Playwright](https://img.shields.io/badge/Playwright-Chromium-2EAD33?logo=playwright&logoColor=white)](https://playwright.dev/python/)
+[![Tests](https://img.shields.io/badge/tests-pytest-0A9EDC?logo=pytest&logoColor=white)](tests/)
+
 법원 사이트에서 **사건번호로 검색**하는 MCP 서버입니다.
 Playwright(헤드리스 브라우저)로 WebSquare 기반 정부 사이트를 조작합니다.
 
@@ -101,6 +107,167 @@ claude mcp add lawyer -- uv --directory $PWD run lawyer-mcp
 ```bash
 # bash/zsh (클론한 폴더에서)
 claude mcp add lawyer -- uv --directory "$PWD" run lawyer-mcp
+```
+
+## 사용 예시
+
+> 아래 반환값은 **구조를 보여주기 위한 예시**입니다. 실제 값이 아닙니다.
+
+### 1. 경매 사건 조회 — 완전 자동
+
+경매 사이트는 CAPTCHA 가 없어 한 번의 요청으로 끝납니다.
+
+> 💬 `순천지원 2024타경12345 경매 사건 조회해줘`
+
+`auction_case_search` 가 호출됩니다.
+
+```json
+{ "case_no": "2024타경12345", "court": "순천지원" }
+```
+
+<details>
+<summary>반환 (발췌)</summary>
+
+```json
+{
+  "court": "순천지원",
+  "case_no": "2024타경12345",
+  "case_name": "부동산임의경매",
+  "filed_date": "2024.03.11",
+  "department": "경매1계",
+  "claim_amount": "150,000,000원",
+  "final_result": null,
+  "parties_summary": "채권자 ○○은행 / 채무자 김OO",
+  "items": [
+    {
+      "물건번호": "1",
+      "용도": "아파트",
+      "감정평가액": "280,000,000원",
+      "물건상태": "유찰(1회)"
+    }
+  ],
+  "listings": [
+    { "소재지": "전남 순천시 ○○동 123 ○○아파트 101동 1004호" }
+  ],
+  "parties": [
+    { "구분": "채권자", "이름": "○○은행" },
+    { "구분": "채무자", "이름": "김OO" }
+  ]
+}
+```
+</details>
+
+`final_result` 가 `null` 이면 미종국(진행 중)입니다. 사건을 찾지 못하면 `None` 을 돌려줍니다.
+
+### 2. 나의 사건검색 — CAPTCHA 2단계
+
+민사·가사·제소전화해 등 일반 사건은 자동입력 방지문자 때문에 두 단계로 나뉩니다.
+**당사자명이 필수**이며, 사건번호와 정확히 일치해야 조회됩니다.
+
+**[1단계]** `case_search_captcha`
+
+```json
+{
+  "court": "광주지방법원 순천지원",
+  "case_no": "2024가단12345",
+  "party_name": "홍길동"
+}
+```
+
+```json
+{
+  "session_id": "a1b2c3d4e5f6",
+  "captcha_image_path": "<REPO_DIR>/.captcha/captcha_a1b2c3d4e5f6.png",
+  "message": "저장된 CAPTCHA 이미지를 열어 표시된 문자를 읽고, case_search_submit 툴에 session_id 와 함께 입력하세요. (세션 유효시간 600초)"
+}
+```
+
+**[2단계]** 이미지의 문자를 읽어 `case_search_submit` 에 전달합니다.
+
+```json
+{ "session_id": "a1b2c3d4e5f6", "captcha_text": "123456" }
+```
+
+<details>
+<summary>반환 (발췌)</summary>
+
+```json
+{
+  "court": "광주지방법원 순천지원",
+  "case_no": "2024가단12345",
+  "case_name": "[전자]대여금",
+  "department": "민사1단독",
+  "filed_date": "2024.03.11",
+  "final_result": null,
+  "parties_summary": "원고 김OO / 피고 홍OO",
+  "basic_info": {
+    "원고소가": "30,000,000원",
+    "수리구분": "제소",
+    "인지액": "140,000원"
+  },
+  "hearings": [
+    {
+      "일자": "2024.09.05",
+      "시각": "14:10",
+      "기일구분": "변론기일",
+      "기일장소": "제100호 법정",
+      "결과": "속행"
+    },
+    {
+      "일자": "2024.10.17",
+      "시각": "14:00",
+      "기일구분": "판결선고기일",
+      "기일장소": "제100호 법정",
+      "결과": ""
+    }
+  ],
+  "submissions": [
+    { "일자": "2024.08.28", "내용": "원고 소송대리인 준비서면 제출" }
+  ],
+  "parties": [
+    { "구분": "원고", "이름": "1. 김OO" },
+    { "구분": "피고", "이름": "1. 홍OO" }
+  ],
+  "agents": [
+    { "구분": "원고 소송대리인", "이름": "변호사 김OO" }
+  ]
+}
+```
+</details>
+
+> 당사자 이름은 **법원 사이트가 이미 마스킹**해서 내려줍니다(`홍OO`). 이 서버가 가공하는 게 아닙니다.
+
+#### CAPTCHA 자동 입력
+
+`LAWYER_MCP_CAPTCHA_DIR` 을 **MCP 클라이언트가 읽을 수 있는 폴더**로 지정하면,
+클라이언트 쪽 모델이 이미지를 직접 읽어 2단계까지 한 번에 진행할 수 있습니다.
+
+```json
+{
+  "mcpServers": {
+    "lawyer": {
+      "command": "uv",
+      "args": ["--directory", "<REPO_DIR>", "run", "lawyer-mcp"],
+      "env": { "LAWYER_MCP_CAPTCHA_DIR": "<클라이언트가 접근 가능한 폴더>" }
+    }
+  }
+}
+```
+
+### 3. 조회 실패
+
+법원 사이트가 띄우는 경고창 문구를 그대로 전달합니다.
+
+```
+조회 실패: 자동입력 방지문자가 일치하지 않습니다.
+          (사건번호·당사자명·자동입력 방지문자를 확인하세요)
+```
+
+경고창 없이 검색 폼으로 되돌아온 경우(당사자명 불일치 등)는 이렇게 나옵니다.
+
+```
+조회 결과를 찾을 수 없습니다. 사건번호와 당사자명이 정확한지 확인하세요.
+(당사자명이 일치하지 않거나 해당 사건이 없을 수 있습니다.)
 ```
 
 ## 환경 변수
