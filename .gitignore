@@ -1,0 +1,35 @@
+# 파이썬
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+.pytest_cache/
+
+# Playwright 임시 파일
+.cache/
+.pw_profile/
+captcha_*.png
+captcha_answer.txt
+.captcha/
+
+# 검증/탐침 산출물
+result_*.png
+result_*.json
+result_*.txt
+probe_*.png
+verify_*.png
+
+# IDE
+.idea/
+.vscode/
+*.iml
+
+# Claude Code 개인 설정(권한 등)
+.claude/settings.local.json
+
+# OS
+Thumbs.db
+.DS_Store
