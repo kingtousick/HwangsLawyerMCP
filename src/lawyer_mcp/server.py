@@ -13,7 +13,7 @@ from __future__ import annotations
 from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 
-from mcp.server.fastmcp import FastMCP
+from mcp.server.fastmcp import FastMCP, Image
 
 from . import courtauction, scourt
 from .browser import manager
@@ -97,11 +97,14 @@ async def case_search_captcha(
   court: str,
   case_no: str,
   party_name: str,
-) -> dict:
+):
   """[1단계] 나의 사건검색을 시작하고 CAPTCHA 이미지를 반환한다.
 
-  CAPTCHA 는 자동 인식할 수 없으므로, 반환된 이미지 파일을 사용자가 직접 읽고
-  case_search_submit 으로 값을 전달해야 한다.
+  CAPTCHA 이미지를 **인라인 이미지 콘텐츠로 직접 반환**하므로, 호출한 모델이
+  이미지를 그대로 보고 문자를 읽어 case_search_submit 의 captcha_text 로 넘기면
+  된다. (별도 파일 열람·파일시스템 접근이 필요 없어 Cowork/데스크탑 등 어떤
+  MCP 클라이언트에서도 동일하게 동작한다.) 호환을 위해 저장된 파일 경로도
+  함께 돌려준다.
 
   Args:
     court: 법원명 (예: '여수시법원'). 사이트 select 옵션과 정확히 일치해야 함.
@@ -109,10 +112,11 @@ async def case_search_captcha(
     party_name: 당사자명. ssgo 사건검색은 당사자명이 필수입력이다.
 
   Returns:
-    session_id 와 captcha_image_path 를 담은 객체.
+    [CAPTCHA 이미지, {session_id, captcha_image_path, message}] 의 리스트.
+    이미지는 인라인 이미지 콘텐츠, 나머지는 JSON 텍스트로 전달된다.
   """
   challenge = await scourt.start_challenge(court, case_no, party_name)
-  return challenge.model_dump()
+  return [Image(path=challenge.captcha_image_path), challenge.model_dump()]
 
 
 @mcp.tool()

@@ -2,12 +2,13 @@
 
   https://ssgo.scourt.go.kr/   (구 safind 가 ssgo 로 이전됨)
 
-사건검색에는 자동입력 방지문자(CAPTCHA)가 있어 완전 자동화가 불가능하다.
+사건검색에는 자동입력 방지문자(CAPTCHA)가 있어 한 번에 자동화할 수 없다.
 따라서 2단계로 나눈다.
 
   1) start_challenge(): 폼을 채운 뒤 CAPTCHA 이미지를 파일로 저장하고
-     세션(브라우저 컨텍스트)을 살려둔 채 사용자에게 이미지를 보여준다.
-  2) submit_answer(): 사용자가 읽은 CAPTCHA 값을 입력해 조회를 완료한다.
+     세션(브라우저 컨텍스트)을 살려둔다. server 레이어가 이 이미지를 인라인
+     이미지 콘텐츠로 호출 모델에 전달해, 모델이 직접 보고 문자를 읽는다.
+  2) submit_answer(): 읽은 CAPTCHA 값을 입력해 조회를 완료한다.
 
 세션은 메모리 딕셔너리에 보관하며 TTL(기본 3분)이 지나면 정리한다.
 
@@ -223,8 +224,8 @@ async def start_challenge(
     session_id=session_id,
     captcha_image_path=img_path,
     message=(
-      "저장된 CAPTCHA 이미지를 열어 표시된 문자를 읽고, "
-      "case_search_submit 툴에 session_id 와 함께 입력하세요. "
+      "함께 반환된 CAPTCHA 이미지의 문자를 읽어, case_search_submit 툴에 "
+      "session_id 와 captcha_text 로 입력하세요. "
       f"(세션 유효시간 {int(_SESSION_TTL)}초)"
     ),
   )
