@@ -25,7 +25,7 @@ async def main():
     os.remove(ANSWER_FILE)
 
   ch = await scourt.start_challenge(COURT, CASE_NO, PARTY)
-  print("[1] CAPTCHA 저장 ->", ch.captcha_image_path, "session:", ch.session_id,
+  print("[1] CAPTCHA 저장 ->", ch.captcha_image_path, "session:", ch.challenge_id,
         flush=True)
 
   print("[2] captcha_answer.txt 대기...", flush=True)
@@ -42,7 +42,7 @@ async def main():
     await manager.shutdown()
     return
 
-  sess = scourt._sessions[ch.session_id]
+  sess = scourt._sessions[ch.challenge_id]
   page = sess.page
   print(f"[3] 답안 {answer!r} 제출", flush=True)
   await page.fill(scourt._SEL_CAPTCHA_INPUT, answer)

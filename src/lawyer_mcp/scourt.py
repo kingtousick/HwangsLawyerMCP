@@ -221,11 +221,11 @@ async def start_challenge(
   )
 
   return CaptchaChallenge(
-    session_id=session_id,
+    challenge_id=session_id,
     captcha_image_path=img_path,
     message=(
       "함께 반환된 CAPTCHA 이미지의 문자를 읽어, case_search_submit 툴에 "
-      "session_id 와 captcha_text 로 입력하세요. "
+      "challenge_id 와 captcha_text 로 입력하세요. "
       f"(세션 유효시간 {int(_SESSION_TTL)}초)"
     ),
   )
@@ -323,7 +323,7 @@ async def submit_answer(session_id: str, captcha_text: str) -> CaseInfo:
   sess = _sessions.get(session_id)
   if sess is None:
     raise ValueError(
-      "세션을 찾을 수 없습니다(만료되었거나 잘못된 session_id). "
+      "세션을 찾을 수 없습니다(만료되었거나 잘못된 challenge_id). "
       "case_search_captcha 부터 다시 시작하세요."
     )
 

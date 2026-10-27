@@ -86,6 +86,7 @@ class CaseInfo(BaseModel):
 class CaptchaChallenge(BaseModel):
   """CAPTCHA 1단계 응답 — 사용자에게 보여줄 이미지와 세션 토큰."""
 
-  session_id: str = Field(description="case_search_submit 호출 시 그대로 전달")
+  # 'session_id' 라는 이름은 원격 Cowork 중계가 툴 인자에서 제거해 버리므로 쓰지 않는다.
+  challenge_id: str = Field(description="case_search_submit 호출 시 그대로 전달")
   captcha_image_path: str = Field(description="저장된 CAPTCHA 이미지 파일 경로")
   message: str = Field(description="사용자 안내 문구")

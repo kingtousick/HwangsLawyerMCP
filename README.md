@@ -174,19 +174,24 @@ claude mcp add lawyer -- uv --directory "$PWD" run lawyer-mcp
 }
 ```
 
+CAPTCHA 이미지(인라인 이미지 콘텐츠)와 함께 아래 JSON 이 반환됩니다.
+
 ```json
 {
-  "session_id": "a1b2c3d4e5f6",
+  "challenge_id": "a1b2c3d4e5f6",
   "captcha_image_path": "<REPO_DIR>/.captcha/captcha_a1b2c3d4e5f6.png",
-  "message": "저장된 CAPTCHA 이미지를 열어 표시된 문자를 읽고, case_search_submit 툴에 session_id 와 함께 입력하세요. (세션 유효시간 600초)"
+  "message": "함께 반환된 CAPTCHA 이미지의 문자를 읽어, case_search_submit 툴에 challenge_id 와 captcha_text 로 입력하세요. (세션 유효시간 600초)"
 }
 ```
 
 **[2단계]** 이미지의 문자를 읽어 `case_search_submit` 에 전달합니다.
 
 ```json
-{ "session_id": "a1b2c3d4e5f6", "captcha_text": "123456" }
+{ "challenge_id": "a1b2c3d4e5f6", "captcha_text": "123456" }
 ```
+
+> 식별자 이름이 `session_id` 가 아닌 이유: 원격 Cowork 세션에서 호출하면 중계 과정에서
+> `session_id` 인자가 제거되어 `Field required` 오류가 납니다.
 
 <details>
 <summary>반환 (발췌)</summary>

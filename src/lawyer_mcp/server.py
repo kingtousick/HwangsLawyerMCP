@@ -112,7 +112,7 @@ async def case_search_captcha(
     party_name: 당사자명. ssgo 사건검색은 당사자명이 필수입력이다.
 
   Returns:
-    [CAPTCHA 이미지, {session_id, captcha_image_path, message}] 의 리스트.
+    [CAPTCHA 이미지, {challenge_id, captcha_image_path, message}] 의 리스트.
     이미지는 인라인 이미지 콘텐츠, 나머지는 JSON 텍스트로 전달된다.
   """
   challenge = await scourt.start_challenge(court, case_no, party_name)
@@ -120,17 +120,20 @@ async def case_search_captcha(
 
 
 @mcp.tool()
-async def case_search_submit(session_id: str, captcha_text: str) -> dict:
+async def case_search_submit(challenge_id: str, captcha_text: str) -> dict:
   """[2단계] CAPTCHA 값을 입력해 사건 조회를 완료한다.
 
+  인자 이름을 session_id 로 두면 원격 Cowork 중계가 그 키를 제거해
+  'Field required' 로 실패하므로 challenge_id 를 쓴다.
+
   Args:
-    session_id: case_search_captcha 가 반환한 세션 ID.
+    challenge_id: case_search_captcha 가 반환한 challenge_id.
     captcha_text: 사용자가 이미지에서 읽은 문자.
 
   Returns:
     사건 기본정보와 진행/기일 내역.
   """
-  info = await scourt.submit_answer(session_id, captcha_text)
+  info = await scourt.submit_answer(challenge_id, captcha_text)
   return info.model_dump()
 
 
